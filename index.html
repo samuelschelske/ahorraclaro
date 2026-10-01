@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AhorraClaro | Calculadora de ahorro y gastos</title>
+<style>
+:root{--accent:#007aff;--bg:#f2f2f7;--ink:#1c1c1e;--mut:#8e8e93;--line:#e5e5ea;--bad:#ff3b30;--ok:#34c759}
+*{box-sizing:border-box;margin:0}
+body{font:17px/1.4 -apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--ink)}
+:focus-visible{outline:3px solid color-mix(in srgb,var(--accent) 45%,transparent);outline-offset:2px}
+[hidden]{display:none!important}
+.top,main{max-width:640px;margin:auto;padding:0 20px}
+.top{padding-top:28px}
+main{padding-bottom:48px}
+.brand{font-size:2rem;font-weight:700;letter-spacing:-.02em}
+.tabs{display:flex;background:#e3e3e8;border-radius:10px;padding:2px;width:calc(100% - 40px);max-width:600px;margin:14px auto 18px}
+.tabs button{flex:1;border:0;background:none;padding:8px;border-radius:8px;font:inherit;font-size:.9rem;font-weight:600;color:var(--ink);cursor:pointer;transition:background .2s,box-shadow .2s}
+.tabs button.on{background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.15)}
+.view{animation:pop .3s ease}
+@keyframes pop{from{transform:translateY(6px);opacity:.4}to{transform:none;opacity:1}}
+.hero{text-align:center;margin-bottom:16px}
+.hi{color:var(--mut);margin-bottom:10px}
+.box{padding:24px 18px}
+.big{font-size:clamp(2.4rem,11vw,3.6rem);font-weight:700;letter-spacing:-.03em;color:var(--accent);line-height:1.1}
+.sub{color:var(--mut);font-size:.9rem}
+.panel{background:#fff;border-radius:16px;padding:18px;margin-bottom:16px}
+h2{font-size:1.1rem;font-weight:600;margin-bottom:12px}
+h3{margin-top:14px;font-size:1rem;text-transform:capitalize}
+.f{display:block;margin-bottom:14px;font-size:.9rem;color:var(--mut)}
+.f input{margin-top:6px}
+.f input:not([type=color]),.add input,#list input,.mvf>input,.mvf>select{width:100%;padding:12px;border:0;border-radius:10px;background:var(--bg);font:inherit;color:var(--ink)}
+.f input[type=color]{display:block;width:48px;height:36px;border:0;padding:0;background:none}
+.f input.bad{outline:2px solid var(--bad)}
+#add,#madd{background:var(--accent);color:#fff;border:0;border-radius:10px;padding:12px 16px;font:inherit;font-weight:600;cursor:pointer;transition:opacity .15s}
+#add:active,#madd:active{opacity:.6}
+.link{background:none;border:0;color:var(--bad);font:inherit;cursor:pointer;padding:6px 0}
+.add{display:flex;gap:8px;margin-top:10px}
+.add input:first-child{flex:2}.add input:nth-child(2){flex:1;min-width:0}
+#list,#ml,.hl{list-style:none;padding:0}
+#list li,#ml li,.hl li{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);animation:pop .3s ease both}
+#list li:last-child,#ml li:last-child,.hl li:last-child{border:0}
+#list span,#ml li span:nth-child(2),.hl li span:nth-child(2){flex:1}
+#list input{width:120px;padding:8px 10px;text-align:right}
+#list button,#ml button{border:0;background:none;color:var(--mut);cursor:pointer;font-size:1rem;padding:4px 8px}
+dl{display:grid;grid-template-columns:1fr auto;gap:10px 16px;margin-bottom:14px}
+dt{color:var(--mut)}dd{font-weight:600;text-align:right}
+#msg{padding:12px;border-radius:12px;background:#e8f8ee;font-weight:500}
+#msg.bad{background:#ffe9e7;color:var(--bad)}
+#err,#msg2,#merr{color:var(--bad);font-size:.9rem;min-height:1.2em}
+.calh{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.calh h2{margin:0;text-transform:capitalize}
+.calh button{border:0;background:none;color:var(--accent);font-size:1.6rem;width:40px;height:40px;cursor:pointer}
+.mvf{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+.mvf>*{flex:1 1 130px}
+#madd{flex:none}
+.days{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.days b{text-align:center;color:var(--mut);font-size:.8rem}
+.day{aspect-ratio:1;min-height:42px;border:0;border-radius:50%;background:none;font:inherit;color:var(--ink);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;transition:background .15s}
+.day:hover{background:var(--bg)}
+.day.hol{color:#ff9500;font-weight:600}
+.day.today{color:var(--accent);font-weight:700}
+.day.sel{background:var(--accent);color:#fff}
+.dots{display:flex;gap:3px;height:6px}
+.dots i{width:6px;height:6px;border-radius:50%}
+.dg{background:var(--bad)}.di{background:var(--ok)}
+.day.sel .dots i{box-shadow:0 0 0 1px #fff}
+.neg{color:var(--bad)}.pos{color:#248a3d}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand">AhorraClaro</div>
+</header>
+<nav class="tabs" aria-label="Secciones">
+  <button data-v="home">Inicio</button>
+  <button data-v="cal">Calendario</button>
+  <button data-v="his">Historial</button>
+</nav>
+
+<main>
+  <div id="v-home" class="view">
+  <section class="hero">
+    <p class="hi">Hola, <b id="who"></b>. Con este plan ahorrarás</p>
+    <div class="panel box">
+      <div class="big" id="total">$0</div>
+      <p class="sub" id="sub"></p>
+    </div>
+  </section>
+
+  <div class="grid">
+    <section class="panel">
+      <h2>Tu plan</h2>
+      <label class="f">Ingreso mensual (CLP)<input type="text" inputmode="numeric" class="mny" id="income" placeholder="Ej: 600.000"></label>
+      <label class="f">Meses que quieres ahorrar<input type="number" id="months" min="1" max="600"></label>
+      <label class="f">¿Cuánta plata quieres guardar cada mes?<input type="text" inputmode="numeric" class="mny" id="save" placeholder="Ej: 100.000"></label>
+      <p class="sub" id="hint"></p>
+      <p id="err"></p>
+
+      </section>
+    <section class="panel">
+      <h2>Gastos fijos</h2>
+      <p class="sub" id="saved">Se guardan solos en este dispositivo y se repiten cada mes.</p>
+      <ul id="list"></ul>
+      <div class="add">
+        <input type="text" id="en" placeholder="Ej: Arriendo" maxlength="30" aria-label="Nombre del gasto">
+        <input type="text" inputmode="numeric" class="mny" id="ev" placeholder="Monto" aria-label="Monto del gasto">
+        <button id="add">Agregar</button>
+      </div>
+      <p id="msg2"></p>
+    </section>
+
+    <section class="panel">
+      <h2 id="mt">Tu mes</h2>
+      <dl>
+        <dt>Gastos fijos</dt><dd id="rg"></dd>
+        <dt>Dinero extra del mes</dt><dd id="re"></dd><dt>Gastos del calendario</dt><dd id="rc"></dd><dt>Ahorro por mes</dt><dd id="rs"></dd>
+        <dt>Libre por mes</dt><dd id="rl"></dd>
+        <dt>Libre por día</dt><dd id="rd"></dd>
+      </dl>
+      <p id="msg"></p>
+    </section>
+  </div>
+  <section class="panel">
+    <h2>Personalizar</h2>
+    <label class="f">Tu nombre<input type="text" id="name" maxlength="20"></label>
+    <label class="f">Tu color<input type="color" id="color"></label>
+    <button id="reset" class="link">Borrar mis datos</button>
+  </section>
+  </div>
+  <div id="v-cal" class="view" hidden>
+  <section class="panel cal">
+    <div class="calh"><button id="prev" aria-label="Mes anterior">‹</button><h2 id="ct" style="margin:0"></h2><button id="next" aria-label="Mes siguiente">›</button></div>
+    <div class="mvf">
+      <select id="mtype" aria-label="Tipo"><option value="g">Gasto</option><option value="i">Dinero extra</option></select>
+      <input type="text" id="mn" placeholder="Ej: Cumpleaños" maxlength="30" aria-label="Nombre">
+      <input type="text" inputmode="numeric" class="mny" id="mv" placeholder="Monto" aria-label="Monto">
+      <input type="date" id="md" aria-label="Fecha">
+      <button id="madd">Agregar</button>
+    </div>
+    <p id="merr"></p>
+    <div class="days" id="days"></div>
+    <p class="sub" id="hnote"></p>
+    <ul id="ml"></ul>
+  </section>
+  </div>
+  <div id="v-his" class="view" hidden>
+  <section class="panel cal">
+    <h2>Historial de gastos</h2>
+    <div id="hl"></div>
+  </section>
+  </div>
+</main>
+
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const money = n => new Intl.NumberFormat('es-CL', {style:'currency', currency:'CLP', maximumFractionDigits:0}).format(n);
+const num = v => +String(v).replace(/\D/g, '').slice(0, 10) || 0;
+const dot = n => n ? n.toLocaleString('es-CL') : '';
+const pad = n => String(n).padStart(2, '0');
+const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+
+let state = {name:'Samuel', color:'#0b9e8a', income:600000, months:12, save:120000,
+  expenses:[{n:'Transporte',v:40000},{n:'Comida',v:120000},{n:'Datos del celular',v:15000}], moves:[]};
+try { Object.assign(state, JSON.parse(localStorage.getItem('ahorroclaro') || '{}')); } catch (e) {}
+
+const now = new Date();
+const today = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+let vy = now.getFullYear(), vm = now.getMonth();
+const hol = {}, loaded = {};
+const mp = () => `${vy}-${pad(vm + 1)}-`;
+
+function renderList() {
+  $('#list').innerHTML = state.expenses.map((e, i) =>
+    `<li style="animation-delay:${i * 50}ms"><span>${esc(e.n)}</span>
+     <input type="text" inputmode="numeric" class="mny" value="${dot(e.v)}" data-i="${i}" aria-label="${esc(e.n)}">
+     <button data-d="${i}" title="Eliminar" aria-label="Eliminar ${esc(e.n)}">✕</button></li>`).join('');
+}
+
+function renderCal() {
+  $('#ct').textContent = MESES[vm] + ' ' + vy;
+  const first = (new Date(vy, vm, 1).getDay() + 6) % 7, n = new Date(vy, vm + 1, 0).getDate();
+  let h = ['L','M','M','J','V','S','D'].map(x => `<b>${x}</b>`).join('') + '<span></span>'.repeat(first);
+  for (let d = 1; d <= n; d++) {
+    const k = mp() + pad(d);
+    const dots = state.moves.filter(x => x.d === k).slice(0, 4).map(x => `<i class="d${x.t}"></i>`).join('');
+    const cls = ['day', hol[k] ? 'hol' : '', k === today ? 'today' : '', k === $('#md').value ? 'sel' : ''].join(' ');
+    h += `<button class="${cls}" data-k="${k}" title="${esc(hol[k] || '')}">${d}<span class="dots">${dots}</span></button>`;
+  }
+  $('#days').innerHTML = h;
+  const mm = state.moves.filter(x => x.d.startsWith(mp())).sort((a, b) => a.d < b.d ? -1 : 1);
+  $('#ml').innerHTML = mm.length ? mm.map(x =>
+    `<li><span>${x.d.slice(8)}/${x.d.slice(5, 7)}</span><span>${esc(x.n)}</span>
+     <span class="${x.t === 'g' ? 'neg' : 'pos'}">${x.t === 'g' ? '-' : '+'}${money(x.v)}</span>
+     <button data-m="${x.id}" aria-label="Eliminar ${esc(x.n)}">✕</button></li>`).join('')
+    : '<li class="sub">Aún no hay movimientos este mes. Toca un día y agrega uno.</li>';
+}
+
+function calc() {
+  state.income = num($('#income').value);
+  state.save = num($('#save').value);
+  state.months = Math.round(+$('#months').value);
+  const ok = state.months >= 1 && state.months <= 600;
+  $('#months').classList.toggle('bad', !ok);
+  $('#err').textContent = ok ? '' : 'Los meses deben estar entre 1 y 600.';
+  if (!ok) return;
+
+  const cmp = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-`, dim = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+  const mm = state.moves.filter(x => x.d.startsWith(cmp));
+  const gm = mm.filter(x => x.t === 'g').reduce((a, x) => a + x.v, 0);
+  const im = mm.filter(x => x.t === 'i').reduce((a, x) => a + x.v, 0);
+  const g = state.expenses.reduce((a, e) => a + e.v, 0);
+  const s = state.save, base = state.income + im, l = base - g - gm - s, tot = s * state.months;
+
+  const t = $('#total'); t.textContent = money(tot);
+  t.classList.remove('pop'); void t.offsetWidth; t.classList.add('pop');
+  $('#sub').textContent = `en ${state.months} ${state.months === 1 ? 'mes' : 'meses'}, guardando ${money(s)} cada mes.`;
+  $('#hint').textContent = state.income ? `Eso es el ${Math.round(s / state.income * 100)}% de lo que ganas.` : '';
+  $('#mt').textContent = 'Tu mes: ' + MESES[now.getMonth()];
+  $('#rg').textContent = money(g);
+  $('#re').textContent = money(im);
+  $('#rc').textContent = money(gm);
+  $('#rs').textContent = money(s);
+  $('#rl').textContent = money(l);
+  $('#rd').textContent = money(Math.max(0, l) / dim);
+
+
+  const m = $('#msg');
+  if (!base) { m.className = ''; m.textContent = 'Escribe tu ingreso mensual para empezar.'; }
+  else if (l < 0) { m.className = 'bad'; m.textContent = `Te pasas por ${money(-l)} este mes. Guarda menos o revisa tus gastos.`; }
+  else { m.className = ''; m.textContent = `Puedes gastar hasta ${money(l)} en ${MESES[now.getMonth()]} en gustos sin culpa (unos ${money(l / dim)} por día).`; }
+  save();
+}
+
+function addExpense() {
+  const n = $('#en').value.trim(), v = num($('#ev').value);
+  if (!n || !v) { $('#msg2').textContent = 'Escribe un nombre y un monto mayor a 0.'; return; }
+  $('#msg2').textContent = '';
+  state.expenses.push({n, v});
+  $('#en').value = ''; $('#ev').value = '';
+  renderList(); calc(); $('#en').focus();
+}
+
+function addMove() {
+  const n = $('#mn').value.trim(), v = num($('#mv').value), d = $('#md').value;
+  if (!n || !v || !d) { $('#merr').textContent = 'Completa el nombre, el monto y la fecha.'; return; }
+  $('#merr').textContent = '';
+  state.moves.push({id: Date.now(), t: $('#mtype').value, n, v, d});
+  $('#mn').value = ''; $('#mv').value = '';
+  vy = +d.slice(0, 4); vm = +d.slice(5, 7) - 1;
+  loadHol(vy); renderCal(); calc();
+}
+
+function loadHol(y) {
+  if (loaded[y]) return; loaded[y] = 1;
+  fetch(`https://date.nager.at/api/v3/PublicHolidays/${y}/CL`)
+    .then(r => r.json())
+    .then(a => { a.forEach(h => hol[h.date] = h.localName); $('#hnote').textContent = 'Los días amarillos son feriados de Chile.'; renderCal(); })
+    .catch(() => { $('#hnote').textContent = 'No se pudieron cargar los feriados. Revisa tu conexión.'; });
+}
+
+function go(step) { vm += step; if (vm < 0) { vm = 11; vy--; } if (vm > 11) { vm = 0; vy++; } loadHol(vy); renderCal(); calc(); }
+
+function applyLook() {
+  document.documentElement.style.setProperty('--accent', state.color);
+  $('#who').textContent = state.name.trim() || 'amigo';
+}
+
+function renderHis() {
+  const a = state.moves.filter(x => x.t === 'g').sort((p, q) => p.d < q.d ? 1 : -1);
+  if (!a.length) { $('#hl').innerHTML = '<p class="sub">Aún no hay gastos. Agrégalos desde el calendario.</p>'; return; }
+  const by = {};
+  a.forEach(x => (by[x.d.slice(0, 7)] = by[x.d.slice(0, 7)] || []).push(x));
+  $('#hl').innerHTML = Object.keys(by).map(k => {
+    const L = by[k];
+    return `<h3>${MESES[+k.slice(5) - 1]} ${k.slice(0, 4)}</h3>
+      <p class="sub">Total gastado: ${money(L.reduce((q, x) => q + x.v, 0))}</p>
+      <ul class="hl">${L.map(x => `<li><span>${x.d.slice(8)}/${x.d.slice(5, 7)}</span><span>${esc(x.n)}</span>
+      <span class="neg">-${money(x.v)}</span></li>`).join('')}</ul>`;
+  }).join('');
+}
+
+function show(v) {
+  if (!['home', 'cal', 'his'].includes(v)) v = 'home';
+  ['home', 'cal', 'his'].forEach(x => { $('#v-' + x).hidden = x !== v; });
+  document.querySelectorAll('.tabs button').forEach(b => b.classList.toggle('on', b.dataset.v === v));
+  if (v === 'his') renderHis();
+  if (location.hash.slice(1) !== v) location.hash = v;
+  window.scrollTo(0, 0);
+}
+
+let ready = false, tm;
+const HINT = 'Se guardan solos en este dispositivo y se repiten cada mes.';
+function save() {
+  try { localStorage.setItem('ahorroclaro', JSON.stringify(state)); } catch (e) {}
+  if (!ready) return;
+  $('#saved').textContent = 'Guardado ✓';
+  clearTimeout(tm); tm = setTimeout(() => { $('#saved').textContent = HINT; }, 1500);
+}
+
+// Eventos
+$('#reset').addEventListener('click', () => {
+  if (confirm('¿Borrar todos tus datos guardados?')) { try { localStorage.removeItem('ahorroclaro'); } catch (e) {} location.reload(); }
+});
+window.addEventListener('hashchange', () => show(location.hash.slice(1)));
+$('.tabs').addEventListener('click', e => { const b = e.target.closest('button'); if (b) show(b.dataset.v); });
+document.addEventListener('input', e => { if (e.target.classList.contains('mny')) e.target.value = dot(num(e.target.value)); }, true);
+$('#list').addEventListener('input', e => {
+  if (e.target.dataset.i !== undefined) { state.expenses[e.target.dataset.i].v = num(e.target.value); calc(); }
+});
+$('#list').addEventListener('click', e => {
+  const b = e.target.closest('button[data-d]');
+  if (b) { state.expenses.splice(+b.dataset.d, 1); renderList(); calc(); }
+});
+$('#days').addEventListener('click', e => {
+  const b = e.target.closest('.day');
+  if (b) { $('#md').value = b.dataset.k; renderCal(); $('#mn').focus(); }
+});
+$('#ml').addEventListener('click', e => {
+  const b = e.target.closest('button[data-m]');
+  if (b) { state.moves = state.moves.filter(x => x.id !== +b.dataset.m); renderCal(); calc(); }
+});
+$('#add').addEventListener('click', addExpense);
+$('#madd').addEventListener('click', addMove);
+$('#prev').addEventListener('click', () => go(-1));
+$('#next').addEventListener('click', () => go(1));
+$('#md').addEventListener('change', renderCal);
+['#en', '#ev'].forEach(id => $(id).addEventListener('keydown', e => { if (e.key === 'Enter') addExpense(); }));
+['#mn', '#mv'].forEach(id => $(id).addEventListener('keydown', e => { if (e.key === 'Enter') addMove(); }));
+['#income', '#months', '#save'].forEach(id => $(id).addEventListener('input', calc));
+$('#name').addEventListener('input', e => { state.name = e.target.value; applyLook(); save(); });
+$('#color').addEventListener('input', e => { state.color = e.target.value; applyLook(); calc(); });
+
+// Inicio
+$('#income').value = dot(state.income); $('#months').value = state.months; $('#save').value = dot(state.save);
+$('#name').value = state.name; $('#color').value = state.color; $('#md').value = today;
+applyLook(); renderList(); renderCal(); calc(); loadHol(vy); show(location.hash.slice(1)); ready = true;
+</script>
+</body>
+</html>
